@@ -1,0 +1,16 @@
+td {
+    padding: 0 !important;
+}
+
+tr:hover
+{
+    background: aliceblue;
+}
+
+#outlined-valor-compra{
+    height: 90px
+}
+
+.full-width {
+    width: 100%
+}
