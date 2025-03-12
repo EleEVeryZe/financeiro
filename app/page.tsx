@@ -3,13 +3,13 @@ import { FINANCEIRO_BACKEND_URL } from "@/app/constants/constants";
 import { Registro } from '@/app/interfaces/interfaces';
 import AddIcon from "@mui/icons-material/Add";
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import Checkbox from '@mui/material/Checkbox';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from "@mui/material/Paper";
 import Select from '@mui/material/Select';
+import Switch from '@mui/material/Switch';
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -27,6 +27,7 @@ import { v4 as uuidv4 } from "uuid";
 import MyBarChart from "./chart/barChart";
 import './page.css';
 import { obterPorcentagemDaCompra, obterPorcentagemSemanalDaCompra } from "./services/registros/registrosServices";
+
 
 function createData(
   id: string,
@@ -57,6 +58,7 @@ function createData(
 const initialRows = [] as Registro[];
 
 export default function Home() {
+  const [ selectedItems, setSelectedItems ] = useState([] as string[])
   const [showPagos, setShowPagos] = useState(true);
   const [pagarRegistrosFiltrados, setPagarRegistrosFiltrados] = useState(false);
   const [showAddOrUpdateComponent, setShowAddOrUpdateComponent] =
@@ -234,6 +236,28 @@ export default function Home() {
     });
   }
 
+  const insertOrRemoveSelectedItems = (isInsert: boolean, items: string[]) => {
+    if (isInsert)
+      setSelectedItems([...selectedItems, ...items]);
+    else 
+      setSelectedItems(selectedItems.filter(selectedItem => items.indexOf(selectedItem) === -1));
+  }
+
+  const marcarOuDesmarcarComoPago = async (isPagar) => {
+    const modifiedItems = filteredRows
+      .filter(filteredItem => selectedItems.indexOf(filteredItem.id) !== -1)
+      .map(filtered => ({...filtered, ehPago: isPagar}));
+
+
+    await persistInBulk(modifiedItems, "PUT")
+    setFilteredRows(filteredRows.map(filtered => selectedItems.indexOf(filtered.id) !== -1 ? {...filtered, ehPago: isPagar} : filtered));
+    setSelectedItems([]);
+  }
+
+  useEffect(() => {
+    console.log(selectedItems)
+  }, [selectedItems])
+
   return (
     <div>
       <MyBarChart data={rows}/>
@@ -243,9 +267,7 @@ export default function Home() {
         <TableHead>
           <TableRow>
             <TableCell>
-              <Checkbox defaultChecked />
-            </TableCell>
-            <TableCell>
+            <Checkbox onChange={(event) => insertOrRemoveSelectedItems(event.target.checked, filteredRows.map(({ id }) => id))} defaultChecked={false}/>
               Mês{" "}
               <TextField
                 id="outlined-basic"
@@ -301,25 +323,32 @@ export default function Home() {
             <TableCell>Qtd Parcelas</TableCell>
             <TableCell>Comentário</TableCell>
             <TableCell>
-              Exibir pagos
+              Exibir pagos <Switch aria-label="Exibir pagos" defaultChecked={false} checked={showPagos}  onChange={(event) => setShowPagos((prevSelected) => !prevSelected)}/>
+              <div>
               <ToggleButton
-                value="check"
-                selected={showPagos}
-                onChange={() => setShowPagos((prevSelected) => !prevSelected)}
-              >
-                <CheckIcon />
-              </ToggleButton>
-
-              <ToggleButton
+                title="Pagar"
                 value="check"
                 selected={showPagos}
                 onChange={() => {
-                  persistInBulk(filteredRows.map(filtered => ({...filtered, ehPago: !pagarRegistrosFiltrados})))
+                  marcarOuDesmarcarComoPago(true);
                   setPagarRegistrosFiltrados(!pagarRegistrosFiltrados)
                 }}
               >
-                <AttachMoneyIcon />
+                <AttachMoneyIcon /> {selectedItems.length}
               </ToggleButton>
+
+              <ToggleButton
+                title="Pagar"
+                value="check"
+                selected={showPagos}
+                onChange={() => {
+                  marcarOuDesmarcarComoPago(false);
+                  setPagarRegistrosFiltrados(!pagarRegistrosFiltrados)
+                }}
+              >
+                #<AttachMoneyIcon /> {selectedItems.length}
+              </ToggleButton>
+              </div>
 
             </TableCell>
             <TableCell>
@@ -443,9 +472,10 @@ export default function Home() {
           {filteredRows && filteredRows.map((row) => (
             <TableRow
               key={row.id}
-              sx={{ "&:last-child td, &:last-child th": { border: 0 }, background: row.ehPago ? "green" : "white" }}
+              sx={{ "&:last-child td, &:last-child th": { border: 0 }, background: row.ehPago ? "#00800038" : "white" }}
             >
               <TableCell>
+                <Checkbox onChange={(event) => insertOrRemoveSelectedItems(event.target.checked, [row.id])} checked={selectedItems.indexOf(row.id) !== -1}/>
                 {getEditableComponent(row, "dtCorrente", "dtCorrente", "data")}
               </TableCell>
               <TableCell>
