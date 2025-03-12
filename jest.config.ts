@@ -13,6 +13,6 @@ const config: Config = {
     "^@/(.*)$": "<rootDir>/$1",
   }
   
-};
+}; 
 
 export default config;
