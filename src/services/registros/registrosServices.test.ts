@@ -1,11 +1,11 @@
-import { ChartData } from "@/app/chart/chartServices";
+import { ChartData } from "@/src/chart/chartServices";
 import { groupedByDateMock, registrosMock } from "../../chart/barChartFixture.test";
 describe("Service", () => {
     let chartDataSUT = new ChartData(registrosMock);
     let chartData;
 
     beforeAll(() => {
-        chartData = chartDataSUT.removeSalary().groupByDateItems();
+        chartData = chartDataSUT.groupByDateItems();
     });
 
     it("Should group data by date", () => {

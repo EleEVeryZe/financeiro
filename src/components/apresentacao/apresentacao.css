@@ -1,0 +1,25 @@
+.txt-attention {
+    color: red;
+    font-weight: bold;
+}
+
+p, h3 {
+    text-align: center;
+}
+
+.center {
+    text-align: center;
+}
+
+.base {
+    display: flex;
+    flex-direction: column;
+}
+
+.weight1 {
+    flex: 1;
+}
+
+.weight3 {
+    flex: 3;
+}

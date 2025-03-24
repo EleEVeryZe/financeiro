@@ -1,6 +1,6 @@
-import { Registro } from '@/app/interfaces/interfaces';
 import { useEffect, useRef, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Rectangle, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Registro } from '../interfaces/interfaces';
 import { ChartData } from './chartServices';
 
 export default function MyBarChart({ data }: { data: Registro[] }) {
@@ -9,7 +9,7 @@ export default function MyBarChart({ data }: { data: Registro[] }) {
 
     useEffect(() => {
       chartService.current = new ChartData(data);
-      setProcessedData(chartService.current.groupByDateItems().sumValor());
+      setProcessedData(chartService.current.setMonthRange(3, 6).groupByDateItems().sumValor());
     }, [data]);
     
     return  <ResponsiveContainer width={"100%"} height={300}>

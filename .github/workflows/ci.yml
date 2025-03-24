@@ -22,13 +22,9 @@ jobs:
 
       - name: Build App
         run: |
-          yarn
-          yarn build
+          npm i
+          npm run build
 
       - name: Sync next files to S3
         run: |
-          aws s3 sync ./out/_next s3://${{ secrets.S3_BUCKET_NAME }}/_next --delete
-
-      - name: Sync next files to S3
-        run: |
-          aws s3 sync ./out s3://${{ secrets.S3_BUCKET_NAME }} --delete --exclude financeiro.json
+          aws s3 sync ./dist s3://${{ secrets.S3_BUCKET_NAME }}/ --delete
