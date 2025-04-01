@@ -3,9 +3,8 @@ import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { createFile, listFiles } from '../services/googleApi';
 import sessionPersistence from '../services/persistence/sessionPersistence';
-import MainTable from './MainTable';
 import Apresentacao from './apresentacao/apresentacao';
-
+import MainTable from './mainTable/MainTable';
 const MainPage: React.FC = () => {
 	const { isSignedIn, signIn, signOut } = useContext(AuthContext);
 	const [files, setFiles] = useState<gapi.client.drive.File[]>([]);

@@ -1,6 +1,7 @@
 "use client";
 import {
   Box,
+  Button,
   Checkbox,
   FormControl,
   FormControlLabel,
@@ -14,10 +15,9 @@ import {
   TableBody,
   TableCell,
   TableContainer,
-  TableHead,
   TableRow,
   TextField,
-  ToggleButton
+  ToggleButton,
 } from "@mui/material";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -30,19 +30,21 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import MyBarChart from "../chart/barChart";
-import { Registro } from "../interfaces/interfaces";
+import MyBarChart from "../../chart/barChart";
+import { Registro } from "../../interfaces/interfaces";
 import {
   add as addRegistro,
   readFileContent,
   remove,
   update,
-} from "../services/persistence/persist";
+} from "../../services/persistence/persist";
 import {
   obterPorcentagemDaCompra,
   obterPorcentagemSemanalDaCompra,
-} from "../services/registros/registrosServices";
-import AddFonteModal from "./mainTableComponents/AddNewFonte";
+} from "../../services/registros/registrosServices";
+import AddFonteModal from "./components/AddNewFonte";
+import Filter from "./components/Filter";
+import filterModule from "./components/Filter.module";
 
 function createData(
   id: string,
@@ -96,14 +98,16 @@ export default function MainTable({ fileId }: { fileId: string }) {
   const [rows, setRows] = useState(initialRows);
   const [filteredRows, setFilteredRows] = useState(initialRows);
   const [editRow, setEditRow] = useState("");
-  const [filtros, setFiltros] = useState<{
-    filtro_meses: string;
-    filtro_descricao: string;
-    filtro_fonte: string;
-  }>({ filtro_meses: "", filtro_fonte: "", filtro_descricao: "" });
+
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
   const [fonteList, setFonteList] = useState<string[]>([]);
+
+  const { filtros, setFiltros } = filterModule(
+    rows,
+    showPagos,
+    setFilteredRows
+  );
 
   const formatDate = (dt: Dayjs, i: number) => {
     return dt.add(i, "months");
@@ -130,61 +134,6 @@ export default function MainTable({ fileId }: { fileId: string }) {
     setShowAddOrUpdateComponent(false);
 
     persistInBulk(parsedNewRow);
-  };
-
-  useEffect(() => {
-    let filtered = [] as Registro[];
-    if (Object.keys(filtros).findIndex((x) => filtros[x]) === -1)
-      setFilteredRows(rows);
-    else {
-      if (filtros.filtro_meses)
-        filtered = rows.filter(({ dtCorrente }) => {
-          const aux = dayjs(dtCorrente).month();
-          return (
-            filtros.filtro_meses.split(";").indexOf(aux + 1 + "") !== -1 &&
-            dayjs().year() === dayjs(dtCorrente).year()
-          );
-        });
-
-      if (filtros.filtro_descricao)
-        filtered = (Object.keys(filtered).length ? filtered : rows).filter(
-          ({ descricao }) => {
-            return (
-              descricao
-                .toLowerCase()
-                .indexOf(filtros.filtro_descricao.toLowerCase()) !== -1
-            );
-          }
-        );
-
-      if (filtros.filtro_fonte)
-        filtered = (Object.keys(filtered).length ? filtered : rows).filter(
-          ({ fonte }) => {
-            return (
-              fonte
-                .toLowerCase()
-                .indexOf(filtros.filtro_fonte.toLowerCase()) !== -1
-            );
-          }
-        );
-
-      if (!showPagos)
-        filtered = (Object.keys(filtered).length ? filtered : rows).filter(
-          ({ ehPago }) => {
-            return ehPago === false || !ehPago;
-          }
-        );
-
-      setFilteredRows(sort(filtered));
-    }
-  }, [filtros, showPagos]);
-
-  const sort = (data: Registro[]) => {
-    return data.toSorted((a, b) => {
-      if (a.dtCorrente.valueOf() < b.dtCorrente.valueOf()) return -1;
-      if (a.dtCorrente.valueOf() > b.dtCorrente.valueOf()) return 1;
-      return 0;
-    });
   };
 
   const getEditableComponent = (
@@ -287,270 +236,190 @@ export default function MainTable({ fileId }: { fileId: string }) {
   }, [selectedItems]);
 
   return (
-    <div>
+    <div style={{background: "white"}}>
       <MyBarChart data={rows} />
+      <Filter
+        setFiltros={setFiltros}
+        filtros={filtros}
+        fonteList={fonteList}
+        setModalOpen={setModalOpen}
+      />
+      <Box sx={{ display: "flex" }}>
+        <Box>
+          <Checkbox
+            onChange={(event) =>
+              insertOrRemoveSelectedItems(
+                event.target.checked,
+                filteredRows.map(({ id }) => id)
+              )
+            }
+            defaultChecked={false}
+          />
+        </Box>
+        <Box>
+          <FormGroup>
+            <FormControlLabel
+              control={
+                <Switch
+                  defaultChecked={false}
+                  checked={showPagos}
+                  onChange={() => setShowPagos((prevSelected) => !prevSelected)}
+                />
+              }
+              label="Exibir pagos"
+            />
+          </FormGroup>
+        </Box>
+        <Box sx={{ display: "flex" }}>
+          <ToggleButton
+            title="Pagar"
+            value="check"
+            selected={showPagos}
+            onChange={() => {
+              marcarOuDesmarcarComoPago(true);
+              setPagarRegistrosFiltrados(!pagarRegistrosFiltrados);
+            }}
+          >
+            <AttachMoneyIcon /> {selectedItems.length}
+          </ToggleButton>
 
+          <ToggleButton
+            title="Pagar"
+            value="check"
+            selected={showPagos}
+            onChange={() => {
+              marcarOuDesmarcarComoPago(false);
+              setPagarRegistrosFiltrados(!pagarRegistrosFiltrados);
+            }}
+          >
+            #<AttachMoneyIcon /> {selectedItems.length}
+          </ToggleButton>
+          <Button
+            variant="outlined"
+            title="Pagar"
+            onClick={() => setShowAddOrUpdateComponent(!showAddOrUpdateComponent)}
+          >
+            <AddIcon />
+          </Button>
+        </Box>
+      </Box>
+      {showAddOrUpdateComponent ? (
+        <Box>
+          <Box sx={{ display: "flex", flexDirection: "column", width: "300px" }}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                label="Mês"
+                format="DD/MM/YYYY"
+                value={dayjs(newRow.dtCorrente).locale("pt-br")}
+                onChange={(value) => {
+                  setNewRow({ ...newRow, dtCorrente: dayjs(value) });
+                }}
+              />
+            </LocalizationProvider>
+            <TextField
+              id="outlined-basic"
+              label="Descrição"
+              className="full-width"
+              variant="outlined"
+              onChange={(e) =>
+                setNewRow({ ...newRow, descricao: e.target.value })
+              }
+            />
+
+            <TextField
+              id="outlined-valor-compra"
+              type="number"
+              label="Valor"
+              variant="outlined"
+              onChange={(e) =>
+                setNewRow({
+                  ...newRow,
+                  valor:
+                    newRow.descricao.indexOf(":") !== -1
+                      ? -1 * parseFloat(e.target.value.replace(",", "."))
+                      : parseFloat(e.target.value.replace(",", ".")),
+                })
+              }
+            />
+
+            <FormControl size="small">
+              <InputLabel id="demo-select-small-label">Fonte</InputLabel>
+              <Select
+                labelId="select-label"
+                id="select"
+                label="Fonte"
+                sx={{ minWidth: 300 }}
+                value={newRow.fonte}
+                defaultValue=""
+                onChange={(e) =>
+                  setNewRow({ ...newRow, fonte: e.target.value })
+                }
+              >
+                {fonteList.map((ftItem) => (
+                  <MenuItem value={ftItem}>{ftItem}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <TextField
+              id="outlined-basic"
+              label="Qtd Parcelas"
+              variant="outlined"
+              value={newRow.qtdParc}
+              type="number"
+              onChange={(e) =>
+                setNewRow({
+                  ...newRow,
+                  qtdParc: parseInt(e.target.value),
+                })
+              }
+            />
+            <TextField
+              id="outlined-basic"
+              label="Categoria"
+              variant="outlined"
+              onChange={(e) =>
+                setNewRow({ ...newRow, categoria: e.target.value })
+              }
+            />
+            <TextField
+              id="outlined-basic"
+              label="Comentário"
+              variant="outlined"
+              onChange={(e) =>
+                setNewRow({ ...newRow, comentario: e.target.value })
+              }
+            />
+          </Box>
+          <AddIcon onClick={() => add()} />
+          <Box>
+            <TableCell colSpan={2}>
+              Soma Parcelas:
+              {newRow.valor * newRow.qtdParc}
+            </TableCell>
+            <TableCell colSpan={2}>
+              % do Total:
+              {obterPorcentagemDaCompra(newRow, filteredRows)}
+            </TableCell>
+            <TableCell colSpan={2}>
+              % do total Semanal:
+              {obterPorcentagemSemanalDaCompra(newRow, filteredRows)}
+            </TableCell>
+          </Box>
+        </Box>
+      ) : (
+        ""
+      )}
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }} aria-label="simple table">
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                Mês{" "}
-                <TextField
-                  id="outlined-basic"
-                  value={filtros.filtro_meses}
-                  onChange={(e) => {
-                    const newFiltro = {
-                      ...filtros,
-                      filtro_meses: e.target.value,
-                    };
-                    setFiltros(newFiltro);
-                    localStorage.setItem("filtro", JSON.stringify(newFiltro));
-                  }}
-                  variant="outlined"
-                />
-              </TableCell>
-              <TableCell>
-                Descrição
-                <TextField
-                  id="outlined-basic"
-                  value={filtros.filtro_descricao}
-                  onChange={(e) => {
-                    const newFiltro = {
-                      ...filtros,
-                      filtro_descricao: e.target.value,
-                    };
-                    setFiltros(newFiltro);
-
-                    localStorage.setItem("filtro", JSON.stringify(newFiltro));
-                  }}
-                  variant="outlined"
-                />
-              </TableCell>
-              <TableCell>Valor</TableCell>
-              <TableCell>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
-                  <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
-                    <InputLabel id="demo-select-small-label">Fonte</InputLabel>
-                    <Select
-                      labelId="select-label"
-                      id="select"
-                      label="Fonte"
-                      value={filtros.filtro_fonte}
-                      defaultValue=""
-                      renderValue={(selected) => {
-                        if (selected.length === 0) {
-                          return <em>Todos</em>;
-                        }
-
-                        return selected;
-                      }}
-                      onChange={(e) => {
-                        const newFiltro = {
-                          ...filtros,
-                          filtro_fonte: e.target.value,
-                        };
-                        setFiltros(newFiltro);
-                        localStorage.setItem(
-                          "filtro",
-                          JSON.stringify(newFiltro)
-                        );
-                      }}
-                    >
-                      <MenuItem value={""}>TODOS</MenuItem>
-                      {fonteList.map((ftItem) => (
-                        <MenuItem value={ftItem}>{ftItem}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <AddIcon onClick={() => setModalOpen(true)} />
-                </Box>
-              </TableCell>
-              <TableCell>Categoria</TableCell>
-              <TableCell>Parcelas</TableCell>
-              <TableCell>Comentário</TableCell>
-              <TableCell>
-                <AddIcon onClick={() => setShowAddOrUpdateComponent(true)} />
-              </TableCell>
-            </TableRow>
-          </TableHead>
           <TableBody>
-            <TableRow>
-              <TableCell >
-                <Checkbox
-                  onChange={(event) =>
-                    insertOrRemoveSelectedItems(
-                      event.target.checked,
-                      filteredRows.map(({ id }) => id)
-                    )
-                  }
-                  defaultChecked={false}
-                />
-              </TableCell>
-              <TableCell>
-              <FormGroup>
-                <FormControlLabel control={<Switch defaultChecked={false}
-                  checked={showPagos}
-                  onChange={(event) =>
-                    setShowPagos((prevSelected) => !prevSelected)
-                  } />} label="Exibir pagos" />
-              </FormGroup>
-              </TableCell>
-              <TableCell>
-                <Box  sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}>
-                  <ToggleButton
-                    title="Pagar"
-                    value="check"
-                    selected={showPagos}
-                    onChange={() => {
-                      marcarOuDesmarcarComoPago(true);
-                      setPagarRegistrosFiltrados(!pagarRegistrosFiltrados);
-                    }}
-                  >
-                    <AttachMoneyIcon /> {selectedItems.length}
-                  </ToggleButton>
-
-                  <ToggleButton
-                    title="Pagar"
-                    value="check"
-                    selected={showPagos}
-                    onChange={() => {
-                      marcarOuDesmarcarComoPago(false);
-                      setPagarRegistrosFiltrados(!pagarRegistrosFiltrados);
-                    }}
-                  >
-                    #<AttachMoneyIcon /> {selectedItems.length}
-                  </ToggleButton>
-                </Box>
-              </TableCell>
-            </TableRow>
-            {showAddOrUpdateComponent ? (
-              <>
-                <TableRow key={-1}>
-                  <TableCell colSpan={2}>
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <DatePicker
-                        label="Mês"
-                        format="DD/MM/YYYY"
-                        value={dayjs(newRow.dtCorrente).locale("pt-br")}
-                        onChange={(value) => {
-                          setNewRow({ ...newRow, dtCorrente: dayjs(value) });
-                        }}
-                      />
-                    </LocalizationProvider>
-                    <TextField
-                      id="outlined-basic"
-                      label="Descrição"
-                      className="full-width"
-                      variant="outlined"
-                      onChange={(e) =>
-                        setNewRow({ ...newRow, descricao: e.target.value })
-                      }
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <TextField
-                      id="outlined-valor-compra"
-                      type="number"
-                      label="Valor"
-                      variant="outlined"
-                      onChange={(e) =>
-                        setNewRow({
-                          ...newRow,
-                          valor:
-                            newRow.descricao.indexOf(":") !== -1
-                              ? -1 *
-                                parseFloat(e.target.value.replace(",", "."))
-                              : parseFloat(e.target.value.replace(",", ".")),
-                        })
-                      }
-                    />
-                  </TableCell>
-                  <TableCell colSpan={2}>
-                    <Select
-                      labelId="demo-simple-select-label"
-                      id="outlined-basic-fonte"
-                      className="full-width"
-                      value={newRow.fonte}
-                      onChange={(e) =>
-                        setNewRow({ ...newRow, fonte: e.target.value })
-                      }
-                    >
-                      {fonteList.map((ftItem) => (
-                        <MenuItem value={ftItem}>{ftItem}</MenuItem>
-                      ))}
-                    </Select>
-                    <TextField
-                      id="outlined-basic"
-                      label="Qtd Parcelas"
-                      variant="outlined"
-                      value={newRow.qtdParc}
-                      type="number"
-                      onChange={(e) =>
-                        setNewRow({
-                          ...newRow,
-                          qtdParc: parseInt(e.target.value),
-                        })
-                      }
-                    />
-                  </TableCell>
-                  <TableCell colSpan={2}>
-                    <TextField
-                      id="outlined-basic"
-                      label="Categoria"
-                      variant="outlined"
-                      onChange={(e) =>
-                        setNewRow({ ...newRow, categoria: e.target.value })
-                      }
-                    />
-                    <TextField
-                      id="outlined-basic"
-                      label="Comentário"
-                      variant="outlined"
-                      onChange={(e) =>
-                        setNewRow({ ...newRow, comentario: e.target.value })
-                      }
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <AddIcon onClick={() => add()} />
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell colSpan={2}>
-                    Soma Parcelas:
-                    {newRow.valor * newRow.qtdParc}
-                  </TableCell>
-                  <TableCell colSpan={2}>
-                    % do Total:
-                    {obterPorcentagemDaCompra(newRow, filteredRows)}
-                  </TableCell>
-                  <TableCell colSpan={2}>
-                    % do total Semanal:
-                    {obterPorcentagemSemanalDaCompra(newRow, filteredRows)}
-                  </TableCell>
-                </TableRow>
-              </>
-            ) : (
-              ""
-            )}
             <TableRow>
               <TableCell>
                 Restante:{" "}
                 {(() => {
                   const totalSalario = filteredRows
                     .filter((x) => x.descricao === "Salario")
-                    .reduce((a, c) => a + parseFloat(c.valor as any), 0); // ✅ Ensure it returns a number
+                    .reduce((a, c) => a + parseFloat(c.valor as any), 0);
 
                   const minhasDespesas = parseFloat(
                     filteredRows
