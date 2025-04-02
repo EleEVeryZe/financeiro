@@ -410,8 +410,8 @@ export default function MainTable({ fileId }: { fileId: string }) {
       ) : (
         ""
       )}
-      <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }} aria-label="simple table">
+      <TableContainer  component={Paper}>
+        <Table sx={{ "-webkit-overflow-scrolling": "touch", "overflow": "auto"}} aria-label="simple table">
           <TableBody>
             <TableRow>
               <TableCell>

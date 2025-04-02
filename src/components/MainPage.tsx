@@ -7,16 +7,12 @@ import Apresentacao from './apresentacao/apresentacao';
 import MainTable from './mainTable/MainTable';
 const MainPage: React.FC = () => {
 	const { isSignedIn, signIn, signOut } = useContext(AuthContext);
-	const [files, setFiles] = useState<gapi.client.drive.File[]>([]);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [fileId, setFileId] = useState<string>();
 
 	useEffect(() => {
-		if (isSignedIn) {
+		if (isSignedIn)
 			fetchFiles();
-		} else {
-			setFiles([]);
-		}
 	}, [isSignedIn]);
 
 	const fetchFiles = async () => {

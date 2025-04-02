@@ -4,10 +4,10 @@ import React, { useEffect, useState } from "react";
 import MainPage from "./components/MainPage";
 import { AuthProvider } from "./context/AuthContext";
 import {
-	API_KEY,
-	CLIENT_ID,
-	DISCOVERY_DOCS,
-	SCOPES,
+  API_KEY,
+  CLIENT_ID,
+  DISCOVERY_DOCS,
+  SCOPES,
 } from "./services/googleApi";
 
 const App: React.FC = () => {
@@ -37,7 +37,7 @@ const App: React.FC = () => {
   }, []);
 
   if (!gapiInitialized) {
-    return <div>Loading...</div>; // You can replace this with a loader/spinner
+    return <div>Loading...</div>;
   }
 
   return (
