@@ -1,8 +1,8 @@
 "use client";
 import {
   Box,
-  Button,
   Checkbox,
+  Fab,
   FormControl,
   FormControlLabel,
   FormGroup,
@@ -17,7 +17,7 @@ import {
   TableContainer,
   TableRow,
   TextField,
-  ToggleButton,
+  ToggleButton
 } from "@mui/material";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -45,6 +45,7 @@ import {
 import AddFonteModal from "./components/AddNewFonte";
 import Filter from "./components/Filter";
 import filterModule from "./components/Filter.module";
+import "./components/filter.css";
 
 function createData(
   id: string,
@@ -236,8 +237,20 @@ export default function MainTable({ fileId }: { fileId: string }) {
   }, [selectedItems]);
 
   return (
-    <div style={{background: "white"}}>
+    <div>
       <MyBarChart data={rows} />
+      <Fab
+        onClick={() => setShowAddOrUpdateComponent(!showAddOrUpdateComponent)}
+        color="primary"
+        aria-label="add"
+        style={{
+          position: "fixed",
+          bottom: 20,
+          right: 20,
+        }}
+      >
+        <AddIcon />
+      </Fab>
       <Filter
         setFiltros={setFiltros}
         filtros={filtros}
@@ -294,104 +307,104 @@ export default function MainTable({ fileId }: { fileId: string }) {
           >
             #<AttachMoneyIcon /> {selectedItems.length}
           </ToggleButton>
-          <Button
-            variant="outlined"
-            title="Pagar"
-            onClick={() => setShowAddOrUpdateComponent(!showAddOrUpdateComponent)}
-          >
-            <AddIcon />
-          </Button>
         </Box>
       </Box>
       {showAddOrUpdateComponent ? (
-        <Box>
-          <Box sx={{ display: "flex", flexDirection: "column", width: "300px" }}>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker
-                label="Mês"
-                format="DD/MM/YYYY"
-                value={dayjs(newRow.dtCorrente).locale("pt-br")}
-                onChange={(value) => {
-                  setNewRow({ ...newRow, dtCorrente: dayjs(value) });
-                }}
-              />
-            </LocalizationProvider>
-            <TextField
-              id="outlined-basic"
-              label="Descrição"
-              className="full-width"
-              variant="outlined"
-              onChange={(e) =>
-                setNewRow({ ...newRow, descricao: e.target.value })
-              }
-            />
-
-            <TextField
-              id="outlined-valor-compra"
-              type="number"
-              label="Valor"
-              variant="outlined"
-              onChange={(e) =>
-                setNewRow({
-                  ...newRow,
-                  valor:
-                    newRow.descricao.indexOf(":") !== -1
-                      ? -1 * parseFloat(e.target.value.replace(",", "."))
-                      : parseFloat(e.target.value.replace(",", ".")),
-                })
-              }
-            />
-
-            <FormControl size="small">
-              <InputLabel id="demo-select-small-label">Fonte</InputLabel>
-              <Select
-                labelId="select-label"
-                id="select"
-                label="Fonte"
-                sx={{ minWidth: 300 }}
-                value={newRow.fonte}
-                defaultValue=""
+        <Box className="bordered">
+          <Box>
+            <Box className="d-flex">
+              <div className="flex-1">
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    label="Mês"
+                    format="DD/MM/YYYY"
+                    value={dayjs(newRow.dtCorrente).locale("pt-br")}
+                    onChange={(value) => {
+                      setNewRow({ ...newRow, dtCorrente: dayjs(value) });
+                    }}
+                  />
+                </LocalizationProvider>
+              </div>
+              <TextField
+                id="outlined-basic"
+                label="Descrição"
+                className="full-width flex-2"
+                variant="outlined"
                 onChange={(e) =>
-                  setNewRow({ ...newRow, fonte: e.target.value })
+                  setNewRow({ ...newRow, descricao: e.target.value })
                 }
-              >
-                {fonteList.map((ftItem) => (
-                  <MenuItem value={ftItem}>{ftItem}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              />
+            </Box>
+            <Box className="d-flex">
+              <TextField
+                id="outlined-valor-compra"
+                type="number"
+                label="Valor"
+                variant="outlined"
+                onChange={(e) =>
+                  setNewRow({
+                    ...newRow,
+                    valor:
+                      newRow.descricao.indexOf(":") !== -1
+                        ? -1 * parseFloat(e.target.value.replace(",", "."))
+                        : parseFloat(e.target.value.replace(",", ".")),
+                  })
+                }
+              />
 
-            <TextField
-              id="outlined-basic"
-              label="Qtd Parcelas"
-              variant="outlined"
-              value={newRow.qtdParc}
-              type="number"
-              onChange={(e) =>
-                setNewRow({
-                  ...newRow,
-                  qtdParc: parseInt(e.target.value),
-                })
-              }
-            />
-            <TextField
-              id="outlined-basic"
-              label="Categoria"
-              variant="outlined"
-              onChange={(e) =>
-                setNewRow({ ...newRow, categoria: e.target.value })
-              }
-            />
-            <TextField
-              id="outlined-basic"
-              label="Comentário"
-              variant="outlined"
-              onChange={(e) =>
-                setNewRow({ ...newRow, comentario: e.target.value })
-              }
-            />
+              <TextField
+                id="outlined-basic"
+                label="Qtd Parcelas"
+                variant="outlined"
+                value={newRow.qtdParc}
+                type="number"
+                onChange={(e) =>
+                  setNewRow({
+                    ...newRow,
+                    qtdParc: parseInt(e.target.value),
+                  })
+                }
+              />
+              <TextField
+                id="outlined-basic"
+                label="Categoria"
+                variant="outlined"
+                onChange={(e) =>
+                  setNewRow({ ...newRow, categoria: e.target.value })
+                }
+              />
+            </Box>
+            <Box className="d-flex">
+              <TextField
+                id="outlined-basic"
+                label="Comentário"
+                variant="outlined"
+                onChange={(e) =>
+                  setNewRow({ ...newRow, comentario: e.target.value })
+                }
+              />
+              <FormControl sx={{ minWidth: 100, width: "100%" }} size="medium">
+                <InputLabel id="demo-select-small-label">Fonte</InputLabel>
+                <Select
+                  
+                  labelId="select-label"
+                  id="select"
+                  label="Fonte"
+                  className="select"
+                  value={newRow.fonte}
+                  defaultValue=""
+                  onChange={(e) =>
+                    setNewRow({ ...newRow, fonte: e.target.value })
+                  }
+                >
+                  {fonteList.map((ftItem) => (
+                    <MenuItem value={ftItem}>{ftItem}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
           </Box>
-          <AddIcon onClick={() => add()} />
+          <div className="txt-right"><AddIcon onClick={() => add()} /></div>
           <Box>
             <TableCell colSpan={2}>
               Soma Parcelas:
@@ -410,8 +423,12 @@ export default function MainTable({ fileId }: { fileId: string }) {
       ) : (
         ""
       )}
-      <TableContainer  component={Paper}>
-        <Table sx={{ "-webkit-overflow-scrolling": "touch", "overflow": "auto"}} aria-label="simple table">
+      <TableContainer component={Paper}>
+        <Table
+          size="small"
+          sx={{ "-webkit-overflow-scrolling": "touch", overflow: "auto" }}
+          aria-label="simple table"
+        >
           <TableBody>
             <TableRow>
               <TableCell>
@@ -519,6 +536,10 @@ export default function MainTable({ fileId }: { fileId: string }) {
                   return result.toFixed(2);
                 })()}
               </TableCell>
+              <TableCell></TableCell>
+              <TableCell></TableCell>
+              <TableCell></TableCell>
+              <TableCell></TableCell>
             </TableRow>
             {filteredRows &&
               filteredRows.map((row) => (
@@ -530,7 +551,7 @@ export default function MainTable({ fileId }: { fileId: string }) {
                   }}
                 >
                   <TableCell>
-                    <Checkbox
+                  <Checkbox
                       onChange={(event) =>
                         insertOrRemoveSelectedItems(event.target.checked, [
                           row.id,
@@ -538,6 +559,9 @@ export default function MainTable({ fileId }: { fileId: string }) {
                       }
                       checked={selectedItems.indexOf(row.id) !== -1}
                     />
+                  </TableCell>
+                  <TableCell>
+                    
                     {getEditableComponent(
                       row,
                       "dtCorrente",

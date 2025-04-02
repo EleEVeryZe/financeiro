@@ -6,3 +6,44 @@
     border-radius: 6px;
     margin: 6px;
 }
+
+.d-flex {
+    display: flex;
+}
+
+.flex-1 {
+    flex: 1;
+}
+
+.flex-5 {
+    flex: 5;
+}
+
+.flex-3 {
+    flex: 3;
+}
+
+.flex-2 {
+    flex: 2;
+}
+
+.alignVertical {
+    display: flex;
+    justify-content: space-between;
+    align-items: anchor-center;
+    min-height: 10px;  
+    margin-top: 1vh;
+}
+
+.mr-1 {
+    margin-right: 1vh !important;
+}
+
+.select {
+    width: 100%;
+}
+
+.txt-right {
+    text-align: right;
+    margin: 1vh 1vh 0 0;
+}

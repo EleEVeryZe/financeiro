@@ -11,17 +11,13 @@ import "./filter.css";
 
 const Filter = ({ setFiltros, filtros, fonteList, setModalOpen }) => {
   return (
-    <Box
-        className={"bordered"}
-      sx={{
-        width: "300vm",
-      }}
-    >
-      <Box>
+    <Box className={"bordered"}>
+      <Box className={"d-flex"}> 
         <TextField
           id="outlined-basic"
           value={filtros.filtro_meses}
           placeholder="Mês"
+          className={"flex-1 mr-1"}
           onChange={(e) => {
             const newFiltro = {
               ...filtros,
@@ -32,12 +28,12 @@ const Filter = ({ setFiltros, filtros, fonteList, setModalOpen }) => {
           }}
           variant="outlined"
         />
-      </Box>
-      <Box>
+      
         <TextField
           id="outlined-basic"
           value={filtros.filtro_descricao}
           placeholder="Descrição"
+          className={"flex-5"}
           onChange={(e) => {
             const newFiltro = {
               ...filtros,
@@ -50,7 +46,7 @@ const Filter = ({ setFiltros, filtros, fonteList, setModalOpen }) => {
           variant="outlined"
         />
       </Box>
-      <Box>
+      <Box className={"alignVertical"}>
         <Box>
           <FormControl size="small">
             <InputLabel id="demo-select-small-label">Fonte</InputLabel>
@@ -76,8 +72,10 @@ const Filter = ({ setFiltros, filtros, fonteList, setModalOpen }) => {
               ))}
             </Select>
           </FormControl>
-          <AddIcon onClick={() => setModalOpen(true)} />
         </Box>
+        
+        <AddIcon className="mr-1" onClick={() => setModalOpen(true)} />
+        
       </Box>
     </Box>
   );
