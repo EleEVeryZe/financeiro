@@ -17,7 +17,7 @@ import {
   TableContainer,
   TableRow,
   TextField,
-  ToggleButton
+  ToggleButton,
 } from "@mui/material";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -187,11 +187,15 @@ export default function MainTable({ fileId }: { fileId: string }) {
 
   const getPersisted = async () => {
     setIsLoading(true);
-    const rows = await readFileContent(fileId);
-    setRows(rows);
-    setFilteredRows(rows);
-    setIsLoading(false);
-    console.log(rows);
+    try {
+      const rows = await readFileContent(fileId);
+      setRows(rows);
+      setFilteredRows(rows);
+    } catch (err) {
+      alert(JSON.stringify(err));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const persist = async (toBePersisted: Registro, method = "POST") => {
@@ -386,7 +390,6 @@ export default function MainTable({ fileId }: { fileId: string }) {
               <FormControl sx={{ minWidth: 100, width: "100%" }} size="medium">
                 <InputLabel id="demo-select-small-label">Fonte</InputLabel>
                 <Select
-                  
                   labelId="select-label"
                   id="select"
                   label="Fonte"
@@ -404,7 +407,9 @@ export default function MainTable({ fileId }: { fileId: string }) {
               </FormControl>
             </Box>
           </Box>
-          <div className="txt-right"><AddIcon onClick={() => add()} /></div>
+          <div className="txt-right">
+            <AddIcon onClick={() => add()} />
+          </div>
           <Box>
             <TableCell colSpan={2}>
               Soma Parcelas:
@@ -449,8 +454,19 @@ export default function MainTable({ fileId }: { fileId: string }) {
                       }, 0)
                   );
 
-                  const result = -1 * totalSalario - minhasDespesas; // ✅ Correct multiplication
+                  const result = -1 * totalSalario - minhasDespesas;
 
+                  return result.toFixed(2);
+                })()}
+              </TableCell>
+              <TableCell>
+                A ser investido:{" "}
+                {(() => {
+                  const totalSalario = filteredRows
+                    .filter((x) => x.descricao === "Salario")
+                    .reduce((a, c) => a + parseFloat(c.valor as any), 0);
+
+                  const result = -1 * (0.2 * totalSalario);
                   return result.toFixed(2);
                 })()}
               </TableCell>
@@ -459,7 +475,7 @@ export default function MainTable({ fileId }: { fileId: string }) {
                 {(() => {
                   const totalSalario = filteredRows
                     .filter((x) => x.descricao === "Salario")
-                    .reduce((a, c) => a + parseFloat(c.valor as any), 0); // ✅ Ensure it returns a number
+                    .reduce((a, c) => a + parseFloat(c.valor as any), 0);
 
                   const totalInvestimento = -1 * (0.2 * totalSalario);
 
@@ -475,7 +491,7 @@ export default function MainTable({ fileId }: { fileId: string }) {
                   );
 
                   const result =
-                    -1 * totalSalario - minhasDespesas - totalInvestimento; // ✅ Correct multiplication
+                    -1 * totalSalario - minhasDespesas - totalInvestimento;
 
                   return result.toFixed(2);
                 })()}
@@ -497,9 +513,9 @@ export default function MainTable({ fileId }: { fileId: string }) {
                 {(() => {
                   const totalSalario = filteredRows
                     .filter((x) => x.descricao === "Salario")
-                    .reduce((a, c) => a + parseFloat(c.valor as any), 0); // ✅ Ensure it returns a number
+                    .reduce((a, c) => a + parseFloat(c.valor as any), 0);
 
-                  const result = -1 * totalSalario; // ✅ Correct multiplication
+                  const result = -1 * totalSalario;
                   return result.toFixed(2);
                 })()}
               </TableCell>
@@ -525,17 +541,6 @@ export default function MainTable({ fileId }: { fileId: string }) {
                     }, 0)
                 ).toFixed(2)}
               </TableCell>
-              <TableCell>
-                A ser investido:{" "}
-                {(() => {
-                  const totalSalario = filteredRows
-                    .filter((x) => x.descricao === "Salario")
-                    .reduce((a, c) => a + parseFloat(c.valor as any), 0); // ✅ Ensure it returns a number
-
-                  const result = -1 * (0.2 * totalSalario); // ✅ Correct multiplication
-                  return result.toFixed(2);
-                })()}
-              </TableCell>
               <TableCell></TableCell>
               <TableCell></TableCell>
               <TableCell></TableCell>
@@ -551,7 +556,7 @@ export default function MainTable({ fileId }: { fileId: string }) {
                   }}
                 >
                   <TableCell>
-                  <Checkbox
+                    <Checkbox
                       onChange={(event) =>
                         insertOrRemoveSelectedItems(event.target.checked, [
                           row.id,
@@ -561,7 +566,6 @@ export default function MainTable({ fileId }: { fileId: string }) {
                     />
                   </TableCell>
                   <TableCell>
-                    
                     {getEditableComponent(
                       row,
                       "dtCorrente",

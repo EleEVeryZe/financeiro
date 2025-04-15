@@ -9,6 +9,9 @@ export const readFileContent = async (fileId: string) => {
 			fileId,
 			alt: 'media',
 		});
+
+		const isFileEmpty = !response?.body || response?.body?.length === 0;
+		if (isFileEmpty) return []		
 		return JSON.parse(response.body);
 	} catch (error) {
 		console.error('Error reading file content:', error);

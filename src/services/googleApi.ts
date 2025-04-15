@@ -35,16 +35,6 @@ export const signIn = () => {
 export const signOut = () => {
 	return gapi.auth2.getAuthInstance().signOut();
 };
-/*
-const getCurrentScopes = () => {
-	const authInstance = gapi.auth2.getAuthInstance();
-	if (authInstance) {
-		const currentUser = authInstance.currentUser.get();
-		const scopes = currentUser.getGrantedScopes();
-		console.log('Granted Scopes:', scopes);
-	}
-};
-*/
 
 export const createFile = async (name: string, content: string) => {
 	try {
@@ -84,8 +74,6 @@ export const createFile = async (name: string, content: string) => {
 		throw error;
 	}
 };
-
-// Additional API methods (e.g., readFile, updateFile, deleteFile)
 
 export const listFiles = async (): Promise<gapi.client.drive.File[]> => {
 	try {
