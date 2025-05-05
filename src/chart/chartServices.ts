@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { Registro } from "../interfaces/interfaces";
-import { obterRestante, obterRestanteMenosInvestimento } from "../services/registros/registrosServices";
+import { containsSalario, obterRestante, obterRestanteMenosInvestimento } from "../services/registros/registrosServices";
 
 export class ChartData {
     data: Registro[];
@@ -52,7 +52,7 @@ export class ChartData {
     }
 
     private removeSalary = (groupedByData: { [key: string]: Registro[] }) => {
-        this.data = this.data.filter(reg => reg.descricao !== "Salario");
+        this.data = this.data.filter(reg => !containsSalario(reg.descricao));
         return this;
     }
 }

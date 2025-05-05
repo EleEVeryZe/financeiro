@@ -28,7 +28,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import MyBarChart from "../../chart/barChart";
 import { Registro } from "../../interfaces/interfaces";
@@ -39,6 +39,7 @@ import {
   update,
 } from "../../services/persistence/persist";
 import {
+  containsSalario,
   obterPorcentagemDaCompra,
   obterPorcentagemSemanalDaCompra,
 } from "../../services/registros/registrosServices";
@@ -103,6 +104,7 @@ export default function MainTable({ fileId }: { fileId: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
   const [fonteList, setFonteList] = useState<string[]>([]);
+  const isCallingAPI = useRef(false);
 
   const { filtros, setFiltros } = filterModule(
     rows,
@@ -114,27 +116,41 @@ export default function MainTable({ fileId }: { fileId: string }) {
     return dt.add(i, "months");
   };
 
-  const add = () => {
+  const add = async () => {
+    if (isCallingAPI.current)
+      return;
+
+    isCallingAPI.current = true;
+
     let parsedNewRow: Registro[] = [];
     const idComum = uuidv4();
-    for (let i = 0; i < newRow.qtdParc; i++)
-      parsedNewRow.push({
-        ...newRow,
-        valor:
-          ((newRow.descricao.indexOf(":") != -1 ? -1 : 1) * newRow.valor) /
-          newRow.qtdParc,
-        dtCorrente: formatDate(newRow.dtCorrente, i),
-        id: uuidv4(),
-        idComum,
-        parcelaAtual: i + 1,
-      });
+    try {
+      for (let i = 0; i < newRow.qtdParc; i++) {
+        if (!newRow.descricao?.length)
+          throw { message: "Campo descrição não pode estar vazio" };
 
-    const newRows = [...rows, newRow];
-    setRows(newRows);
-    setFilteredRows([...filteredRows, ...parsedNewRow]);
-    setShowAddOrUpdateComponent(false);
+        parsedNewRow.push({
+          ...newRow,
+          valor: newRow.valor / newRow.qtdParc,
+          dtCorrente: formatDate(newRow.dtCorrente, i),
+          id: uuidv4(),
+          idComum,
+          parcelaAtual: i + 1,
+        });
+      }
 
-    persistInBulk(parsedNewRow);
+      const newRows = [...rows, newRow];
+
+      await persistInBulk(parsedNewRow);
+      setRows(newRows);
+      setFilteredRows([...filteredRows, ...parsedNewRow]);
+      setShowAddOrUpdateComponent(false);
+    } catch (err) {
+      alert(err.message ? err.message : "Ocorreu um erro na hora de gravar a informação");
+      console.log(err);
+    } finally {
+      isCallingAPI.current = false;
+    }
   };
 
   const getEditableComponent = (
@@ -149,6 +165,7 @@ export default function MainTable({ fileId }: { fileId: string }) {
           id="outlined-basic"
           label={label}
           variant="outlined"
+          sx={{ width: 100 }}
           value={
             typeof row[propertyName] === "number"
               ? parseFloat(row[propertyName] as any).toFixed(2)
@@ -349,7 +366,8 @@ export default function MainTable({ fileId }: { fileId: string }) {
                   setNewRow({
                     ...newRow,
                     valor:
-                      newRow.descricao.indexOf(":") !== -1
+                      newRow.descricao.indexOf(":") !== -1 ||
+                      containsSalario(newRow.descricao)
                         ? -1 * parseFloat(e.target.value.replace(",", "."))
                         : parseFloat(e.target.value.replace(",", ".")),
                   })
@@ -445,7 +463,7 @@ export default function MainTable({ fileId }: { fileId: string }) {
 
                   const minhasDespesas = parseFloat(
                     filteredRows
-                      .filter((x) => x.descricao !== "Salario")
+                      .filter((x) => !containsSalario(x.descricao))
                       .reduce((a, c) => {
                         return (parseFloat(a as any) +
                           parseFloat(
@@ -463,7 +481,7 @@ export default function MainTable({ fileId }: { fileId: string }) {
                 A ser investido:{" "}
                 {(() => {
                   const totalSalario = filteredRows
-                    .filter((x) => x.descricao === "Salario")
+                    .filter((x) => containsSalario(x.descricao))
                     .reduce((a, c) => a + parseFloat(c.valor as any), 0);
 
                   const result = -1 * (0.2 * totalSalario);
@@ -474,14 +492,14 @@ export default function MainTable({ fileId }: { fileId: string }) {
                 Restante - Invest:{" "}
                 {(() => {
                   const totalSalario = filteredRows
-                    .filter((x) => x.descricao === "Salario")
+                    .filter((x) => containsSalario(x.descricao))
                     .reduce((a, c) => a + parseFloat(c.valor as any), 0);
 
                   const totalInvestimento = -1 * (0.2 * totalSalario);
 
                   const minhasDespesas = parseFloat(
                     filteredRows
-                      .filter((x) => x.descricao !== "Salario")
+                      .filter((x) => !containsSalario(x.descricao))
                       .reduce((a, c) => {
                         return (parseFloat(a as any) +
                           parseFloat(
@@ -500,7 +518,7 @@ export default function MainTable({ fileId }: { fileId: string }) {
                 Minhas despezas:{" "}
                 {parseFloat(
                   filteredRows
-                    .filter((x) => x.descricao !== "Salario")
+                    .filter((x) => !containsSalario(x.descricao))
                     .reduce((a, c) => {
                       return (parseFloat(a as any) +
                         parseFloat(c.valor > 0 ? c.valor : (0 as any))) as any;
@@ -512,7 +530,7 @@ export default function MainTable({ fileId }: { fileId: string }) {
                 Sálario:{" "}
                 {(() => {
                   const totalSalario = filteredRows
-                    .filter((x) => x.descricao === "Salario")
+                    .filter((x) => containsSalario(x.descricao))
                     .reduce((a, c) => a + parseFloat(c.valor as any), 0);
 
                   const result = -1 * totalSalario;
@@ -523,7 +541,7 @@ export default function MainTable({ fileId }: { fileId: string }) {
                 Total:{" "}
                 {parseFloat(
                   filteredRows
-                    .filter((x) => x.descricao !== "Salario")
+                    .filter((x) => !containsSalario(x.descricao))
                     .reduce((a, c) => {
                       return (parseFloat(a as any) +
                         parseFloat(c.valor as any)) as any;
@@ -534,7 +552,7 @@ export default function MainTable({ fileId }: { fileId: string }) {
                 Soma:{" "}
                 {parseFloat(
                   filteredRows
-                    .filter((x) => x.descricao !== "Salario")
+                    .filter((x) => !containsSalario(x.descricao))
                     .reduce((a, c) => {
                       return (parseFloat(a as any) +
                         Math.abs(parseFloat(c.valor as any))) as any;
@@ -555,7 +573,7 @@ export default function MainTable({ fileId }: { fileId: string }) {
                     background: row.ehPago ? "#00800038" : "white",
                   }}
                 >
-                  <TableCell>
+                  <TableCell style={{ padding: 0, width: "100%" }}>
                     <Checkbox
                       onChange={(event) =>
                         insertOrRemoveSelectedItems(event.target.checked, [
@@ -565,7 +583,7 @@ export default function MainTable({ fileId }: { fileId: string }) {
                       checked={selectedItems.indexOf(row.id) !== -1}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={{ padding: 0, width: "100%" }}>
                     {getEditableComponent(
                       row,
                       "dtCorrente",
@@ -573,16 +591,51 @@ export default function MainTable({ fileId }: { fileId: string }) {
                       "data"
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={{ padding: 0, width: "100%" }}>
                     {getEditableComponent(row, "descricao", "descricao")}
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={{ padding: 0, width: "100%" }}>
                     {getEditableComponent(row, "Valor", "valor", "number")}
                   </TableCell>
-                  <TableCell>
-                    {getEditableComponent(row, "Fonte", "fonte")}
+                  <TableCell style={{ padding: 0, width: "100%" }}>
+                    {editRow === row.id ? (
+                      <FormControl
+                        sx={{ minWidth: 100, width: "100%" }}
+                        size="medium"
+                      >
+                        <InputLabel id="demo-select-small-label">
+                          Fonte
+                        </InputLabel>
+                        <Select
+                          labelId="select-label"
+                          id="select"
+                          label="Fonte"
+                          className="select"
+                          value={row.fonte}
+                          defaultValue=""
+                          onChange={(e) => {
+                            setFilteredRows([
+                              ...filteredRows.map((x) => {
+                                if (x.id === editRow)
+                                  return {
+                                    ...row,
+                                    fonte: e.target.value,
+                                  };
+                                return x;
+                              }),
+                            ]);
+                          }}
+                        >
+                          {fonteList.map((ftItem) => (
+                            <MenuItem value={ftItem}>{ftItem}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    ) : (
+                      getEditableComponent(row, "Fonte", "fonte")
+                    )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={{ padding: 0, width: "100%" }}>
                     {getEditableComponent(row, "Categoria", "categoria")}
                   </TableCell>
                   <TableCell>

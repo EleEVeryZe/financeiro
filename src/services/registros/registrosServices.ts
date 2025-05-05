@@ -1,13 +1,18 @@
 import moment from "moment";
 import { Registro } from "../../interfaces/interfaces";
 
+export const containsSalario = (descricao: string) => {
+    const descr = descricao.toLowerCase().trim();
+    return descr === "salario" || descr === "salário";
+}
+
 export const obterTotalSalario = (data: Registro[]) => data
-.filter((x) => x.descricao === "Salario")
+.filter((x) => containsSalario(x.descricao))
 .reduce((a, c) => a + parseFloat(c.valor as any), 0);
 
 export const obterMinhasDespesas = (data: Registro[]) => parseFloat(
     data
-    .filter(x => x.descricao !== "Salario")
+    .filter(x => !containsSalario(x.descricao))
     .reduce((a, c) => {
       return parseFloat(a as any) + parseFloat(c.valor > 0 ? c.valor : 0 as any) as any;
     }, 0)
