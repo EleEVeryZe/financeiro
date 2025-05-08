@@ -1,11 +1,11 @@
 import AddIcon from "@mui/icons-material/Add";
 import {
-    Box,
-    FormControl,
-    InputLabel,
-    MenuItem,
-    Select,
-    TextField,
+  Box,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
 } from "@mui/material";
 import "./filter.css";
 
@@ -68,7 +68,7 @@ const Filter = ({ setFiltros, filtros, fonteList, setModalOpen }) => {
             >
               <MenuItem value={""}>TODOS</MenuItem>
               {fonteList.map((ftItem) => (
-                <MenuItem value={ftItem}>{ftItem}</MenuItem>
+                <MenuItem key={ftItem} value={ftItem}>{ftItem}</MenuItem>
               ))}
             </Select>
           </FormControl>

@@ -1,4 +1,8 @@
 "use client";
+import AddIcon from "@mui/icons-material/Add";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import CloseIcon from "@mui/icons-material/Close";
+import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import {
   Box,
   Checkbox,
@@ -19,16 +23,12 @@ import {
   TextField,
   ToggleButton,
 } from "@mui/material";
-
-import AddIcon from "@mui/icons-material/Add";
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
-import CloseIcon from "@mui/icons-material/Close";
-import ModeEditIcon from "@mui/icons-material/ModeEdit";
+import CircularProgress from "@mui/material/CircularProgress";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import MyBarChart from "../../chart/barChart";
 import { Registro } from "../../interfaces/interfaces";
@@ -104,7 +104,9 @@ export default function MainTable({ fileId }: { fileId: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
   const [fonteList, setFonteList] = useState<string[]>([]);
-  const isCallingAPI = useRef(false);
+  const [isCallingAPI, setIsCallingAPI] = useState(false);
+
+  const [isPaying, setIsPaying] = useState({ loading: false, id: ""} as { loading: boolean, id?: string});
 
   const { filtros, setFiltros } = filterModule(
     rows,
@@ -117,14 +119,13 @@ export default function MainTable({ fileId }: { fileId: string }) {
   };
 
   const add = async () => {
-    if (isCallingAPI.current)
-      return;
-
-    isCallingAPI.current = true;
+    if (isCallingAPI) return;
 
     let parsedNewRow: Registro[] = [];
     const idComum = uuidv4();
     try {
+      setIsCallingAPI(true);
+
       for (let i = 0; i < newRow.qtdParc; i++) {
         if (!newRow.descricao?.length)
           throw { message: "Campo descrição não pode estar vazio" };
@@ -136,6 +137,7 @@ export default function MainTable({ fileId }: { fileId: string }) {
           id: uuidv4(),
           idComum,
           parcelaAtual: i + 1,
+          dtEfetiva: dayjs().toISOString(),
         });
       }
 
@@ -146,10 +148,14 @@ export default function MainTable({ fileId }: { fileId: string }) {
       setFilteredRows([...filteredRows, ...parsedNewRow]);
       setShowAddOrUpdateComponent(false);
     } catch (err) {
-      alert(err.message ? err.message : "Ocorreu um erro na hora de gravar a informação");
+      alert(
+        err.message
+          ? err.message
+          : "Ocorreu um erro na hora de gravar a informação"
+      );
       console.log(err);
     } finally {
-      isCallingAPI.current = false;
+      setIsCallingAPI(false);
     }
   };
 
@@ -237,20 +243,47 @@ export default function MainTable({ fileId }: { fileId: string }) {
       );
   };
 
-  const marcarOuDesmarcarComoPago = async (isPagar) => {
-    const modifiedItems = filteredRows
-      .filter((filteredItem) => selectedItems.indexOf(filteredItem.id) !== -1)
-      .map((filtered) => ({ ...filtered, ehPago: isPagar }));
+  const marcarOuDesmarcarComoPago = async (isPagar, row?: Registro) => {
+    try {
+      setIsPaying({ loading: true, id: row.id });
 
-    await update(fileId, modifiedItems);
-    setFilteredRows(
-      filteredRows.map((filtered) =>
-        selectedItems.indexOf(filtered.id) !== -1
-          ? { ...filtered, ehPago: isPagar }
-          : filtered
-      )
-    );
-    setSelectedItems([]);
+      const executarSelecionados = async () => {
+        const modifiedItems = filteredRows
+          .filter(
+            (filteredItem) => selectedItems.indexOf(filteredItem.id) !== -1
+          )
+          .map((filtered) => ({ ...filtered, ehPago: isPagar }));
+
+        await update(fileId, modifiedItems);
+        setFilteredRows(
+          filteredRows.map((filtered) =>
+            selectedItems.indexOf(filtered.id) !== -1
+              ? { ...filtered, ehPago: isPagar }
+              : filtered
+          )
+        );
+        setSelectedItems([]);
+      };
+
+      const executarIndividual = async () => {
+        await update(fileId, [{ ...row, ehPago: !!!row.ehPago }]);
+        setFilteredRows(
+          filteredRows.map((filtered) =>
+            filtered.id != row.id ? filtered : { ...row, ehPago: !!!row.ehPago }
+          )
+        );
+      };
+
+      if (row) await executarIndividual();
+      else await executarSelecionados();
+    } catch (err) {
+      alert(
+        `Ocorreu um erro ao ${isPagar ? "Marcar" : "Desmarcar"} o registro`
+      );
+      console.error(err);
+    } finally {
+      setIsPaying({ loading: false });
+    }
   };
 
   useEffect(() => {
@@ -314,7 +347,7 @@ export default function MainTable({ fileId }: { fileId: string }) {
               setPagarRegistrosFiltrados(!pagarRegistrosFiltrados);
             }}
           >
-            <AttachMoneyIcon /> {selectedItems.length}
+            Pagar {selectedItems.length}
           </ToggleButton>
 
           <ToggleButton
@@ -326,7 +359,7 @@ export default function MainTable({ fileId }: { fileId: string }) {
               setPagarRegistrosFiltrados(!pagarRegistrosFiltrados);
             }}
           >
-            #<AttachMoneyIcon /> {selectedItems.length}
+            Desfazer {selectedItems.length}
           </ToggleButton>
         </Box>
       </Box>
@@ -426,7 +459,11 @@ export default function MainTable({ fileId }: { fileId: string }) {
             </Box>
           </Box>
           <div className="txt-right">
-            <AddIcon onClick={() => add()} />
+            {isCallingAPI ? (
+              <CircularProgress />
+            ) : (
+              <AddIcon onClick={() => add()} />
+            )}
           </div>
           <Box>
             <TableCell colSpan={2}>
@@ -658,18 +695,15 @@ export default function MainTable({ fileId }: { fileId: string }) {
                     />
                   </TableCell>
                   <TableCell>
-                    <AttachMoneyIcon
-                      onClick={() => {
-                        persist({ ...row, ehPago: !!!row.ehPago }, "PUT");
-                        setFilteredRows(
-                          filteredRows.map((filtered) =>
-                            filtered.id != row.id
-                              ? filtered
-                              : { ...row, ehPago: !!!row.ehPago }
-                          )
-                        );
-                      }}
-                    />
+                    {isPaying.loading && isPaying.id === row.id ? (
+                      <CircularProgress style={{width: "25px", height: "25px"}}/>
+                    ) : (
+                      <AttachMoneyIcon
+                        onClick={() => {
+                          marcarOuDesmarcarComoPago(!!!row.ehPago, row);
+                        }}
+                      />
+                    )}
                   </TableCell>
 
                   <TableCell>

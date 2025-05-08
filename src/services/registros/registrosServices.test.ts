@@ -5,7 +5,7 @@ describe("Service", () => {
     let chartData;
 
     beforeAll(() => {
-        chartData = chartDataSUT.groupByDateItems();
+        chartData = chartDataSUT.formatData();
     });
 
     it("Should group data by date", () => {

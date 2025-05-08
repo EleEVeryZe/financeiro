@@ -8,18 +8,23 @@ export class ChartData {
         this.data = data;
     }
 
-    private sumValor = (groupedByData: { [key: string]: Registro[] }) => {
+    private readonly sumValor = (groupedByData: { [key: string]: Registro[] }) => {
+        let acumulado = 0;
         return Object.keys(groupedByData).map((key) => 
-            ({
-                descricao: key,
-                valor: obterRestante(groupedByData[key]),
-                valorMenosInvestimento: obterRestanteMenosInvestimento(groupedByData[key])
-            }), {}
+            {
+                acumulado += parseFloat(obterRestante(groupedByData[key]));
+                return {
+                    descricao: key,
+                    valor: obterRestante(groupedByData[key]),
+                    valorMenosInvestimento: obterRestanteMenosInvestimento(groupedByData[key]),
+                    acumulado
+                }
+            }, {}
         )
     }
 
-    public groupByDateItems = () : { data: { [key: string]: Registro[] }, sumValor: () => void, removeSalary: () => void } => {
-        const groupedByData = this.data.reduce((previousValue: { [key: string]: Registro[] } , currentValue) => {
+    private groupByDateItems = (data: Registro[]) => {
+        return data.reduce((previousValue: { [key: string]: Registro[] } , currentValue) => {
             const dt = dayjs(currentValue.dtCorrente).format("YYYYMM");
             return {
                 ...previousValue,
@@ -30,6 +35,10 @@ export class ChartData {
             }
         }
         , {});
+    }
+
+    public formatData = () : { data: { [key: string]: Registro[] }, sumValor: () => void, removeSalary: () => void } => {
+        const groupedByData = this.groupByDateItems(this.data);
 
         return {
             data: groupedByData,
@@ -42,17 +51,22 @@ export class ChartData {
      * Exclui os registros anteriores a initMes atrás e posteriores a finMes a frente.
      * ex: init: 3 meses anteriores e fin: 4 posteriores =>  Se hoje fosse mes 6 iria mostrar no inicio março até outubro
      */
-    public setMonthRange = (initMes: number, finMes: number) => {
-        const today = dayjs();
-        
+    public setMonthRange = (initMes: number, finMes: number) => {        
         const initDayJs = dayjs().subtract(initMes, "month");
         const finDayJs = dayjs().add(finMes, "month");
         this.data = this.data.filter(reg => dayjs(reg.dtCorrente).isAfter(initDayJs) && dayjs(reg.dtCorrente).isBefore(finDayJs));
         return this;
     }
 
-    private removeSalary = (groupedByData: { [key: string]: Registro[] }) => {
+    private readonly removeSalary = () => {
         this.data = this.data.filter(reg => !containsSalario(reg.descricao));
         return this;
+    }
+
+    private readonly getPassedHistory = (initMes: number) => {
+        const initDayJs = dayjs().subtract(initMes, "month");
+        const todaysMonth = dayjs().month();
+        return this.data.filter(reg => dayjs(reg.dtCorrente).isAfter(initDayJs) && dayjs(reg.dtCorrente).isBefore(todaysMonth));
+        
     }
 }

@@ -9,7 +9,7 @@ export default function MyBarChart({ data }: { data: Registro[] }) {
 
     useEffect(() => {
       chartService.current = new ChartData(data);
-      setProcessedData(chartService.current.setMonthRange(3, 6).groupByDateItems().sumValor());
+      setProcessedData(chartService.current.setMonthRange(3, 6).formatData().sumValor());
     }, [data]);
     
     return  <ResponsiveContainer width={"100%"} height={300}>
@@ -34,6 +34,11 @@ export default function MyBarChart({ data }: { data: Registro[] }) {
       <Bar
         dataKey="valorMenosInvestimento"
         fill="#B3CDAD"
+        activeBar={<Rectangle fill="pink" stroke="blue" />}
+      />
+      <Bar
+        dataKey="acumulado"
+        fill="#5059c9"
         activeBar={<Rectangle fill="pink" stroke="blue" />}
       />
     </BarChart>
