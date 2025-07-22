@@ -32,7 +32,7 @@ const Filter = ({ setFiltros, filtros, fonteList, setModalOpen }) => {
         <TextField
           id="outlined-basic"
           value={filtros.filtro_descricao}
-          placeholder="Descrição"
+          placeholder="Descrição ou Comentário"
           className={"flex-5"}
           onChange={(e) => {
             const newFiltro = {

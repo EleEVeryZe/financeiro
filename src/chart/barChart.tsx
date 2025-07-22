@@ -9,7 +9,7 @@ export default function MyBarChart({ data }: { data: Registro[] }) {
 
     useEffect(() => {
       chartService.current = new ChartData(data);
-      setProcessedData(chartService.current.setMonthRange(3, 6).formatData().sumValor());
+      setProcessedData(chartService.current.setMonthRange(3, 3).formatData().sumValor());
     }, [data]);
     
     return  <ResponsiveContainer width={"100%"} height={300}>

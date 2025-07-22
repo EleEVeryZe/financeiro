@@ -25,12 +25,10 @@ const filterModule = (registros: Registro[], showPagos: boolean, setRegistros) =
   const filterByDescricao = (filtered: Registro[]) => {
     if (filtros.filtro_descricao)
       return (Object.keys(filtered).length ? filtered : registros).filter(
-        ({ descricao }) => {
-          return (
-            descricao
-              .toLowerCase()
-              .indexOf(filtros.filtro_descricao.toLowerCase()) !== -1
-          );
+        ({ descricao, comentario }) => {
+          const byDescricao = descricao.toLowerCase().indexOf(filtros.filtro_descricao.toLowerCase()) !== -1
+          const byComentario = comentario.toLowerCase().indexOf(filtros.filtro_descricao.toLowerCase()) !== -1
+          return byDescricao || byComentario;
         }
       );
 
