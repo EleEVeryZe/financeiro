@@ -245,7 +245,7 @@ export default function MainTable({ fileId }: { fileId: string }) {
 
   const marcarOuDesmarcarComoPago = async (isPagar, row?: Registro) => {
     try {
-      setIsPaying({ loading: true, id: row.id });
+      setIsPaying({ loading: true, id: row?.id });
 
       const executarSelecionados = async () => {
         const modifiedItems = filteredRows
