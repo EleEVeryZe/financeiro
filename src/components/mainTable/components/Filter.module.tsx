@@ -62,8 +62,8 @@ const filterModule = (registros: Registro[], showPagos: boolean, setRegistros) =
 
   const sort = (data: Registro[]) => {
     return data.toSorted((a, b) => {
-      if (a.dtCorrente.valueOf() < b.dtCorrente.valueOf()) return -1;
-      if (a.dtCorrente.valueOf() > b.dtCorrente.valueOf()) return 1;
+      if (a.dtCorrente?.valueOf() < b.dtCorrente.valueOf()) return -1;
+      if (a.dtCorrente?.valueOf() > b.dtCorrente.valueOf()) return 1;
       return 0;
     });
   };

@@ -2,7 +2,7 @@ import moment from "moment";
 import { Registro } from "../../interfaces/interfaces";
 
 export const containsSalario = (descricao: string) => {
-    const descr = descricao.toLowerCase().trim();
+    const descr = descricao?.toLowerCase().trim();
     return descr === "salario" || descr === "salário";
 }
 
