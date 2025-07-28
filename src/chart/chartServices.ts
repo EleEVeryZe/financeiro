@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { Registro } from "../interfaces/interfaces";
-import { containsSalario, obterRestante, obterRestanteMenosInvestimento } from "../services/registros/registrosServices";
+import { containsSalario, obterRestante, obterRestanteMenosInvestimento, obterTotalInvestimento } from "../services/registros/registrosServices";
 
 export class ChartData {
     data: Registro[];
@@ -10,17 +10,24 @@ export class ChartData {
 
     private readonly sumValor = (groupedByData: { [key: string]: Registro[] }) => {
         let acumulado = 0;
-        return Object.keys(groupedByData).map((key) => 
+        return Object.keys(groupedByData).map((mesAno) => 
             {
-                acumulado += parseFloat(obterRestante(groupedByData[key]));
+                acumulado += parseFloat(this.isDateInTheFuture(mesAno) ? obterTotalInvestimento(groupedByData[mesAno]) : obterRestante(groupedByData[mesAno]));
                 return {
-                    descricao: key,
-                    valor: obterRestante(groupedByData[key]),
-                    valorMenosInvestimento: obterRestanteMenosInvestimento(groupedByData[key]),
-                    acumulado
+                    descricao: mesAno,
+                    valor: obterRestante(groupedByData[mesAno]),
+                    valorMenosInvestimento: obterRestanteMenosInvestimento(groupedByData[mesAno]),
+                    acumulado: acumulado.toFixed(2)
                 }
             }, {}
         )
+    }
+
+    private readonly isDateInTheFuture = (input: string) => {
+        const year = input.slice(0, 4)
+        const month = input.slice(4)
+        const date = dayjs(`${year}-${month}-01`)
+        return dayjs(date).isAfter(dayjs().add(1, "month"));
     }
 
     private groupByDateItems = (data: Registro[]) => {

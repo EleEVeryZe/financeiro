@@ -33,6 +33,11 @@ export const obterRestanteMenosInvestimento = (data: Registro[]) => {
     return result.toFixed(2); 
 }
 
+export const obterTotalInvestimento = (data: Registro[]) => {
+    const totalSalario = obterTotalSalario(data);
+    return (-1 * (0.2 * totalSalario)).toFixed(2);
+}
+
 export const obterPorcentagemDaCompra = (compra: Registro, data: Registro[]) => {
     const restante = obterRestanteMenosInvestimento(data);
     if (parseFloat(restante) < 0)
